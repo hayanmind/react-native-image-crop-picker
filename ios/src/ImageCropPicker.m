@@ -58,9 +58,9 @@ RCT_EXPORT_MODULE();
             @"compressVideo": @YES,
             @"minFiles": @1,
             @"maxFiles": @5,
-            @"width": @200,
+            @"width": @0,
             @"waitAnimationEnd": @YES,
-            @"height": @200,
+            @"height": @0,
             @"useFrontCamera": @NO,
             @"avoidEmptySpaceAroundImage": @YES,
             @"compressImageQuality": @0.8,
@@ -797,13 +797,20 @@ RCT_EXPORT_METHOD(openCropper:(NSDictionary *)options
                    didCropImage:(UIImage *)croppedImage
                   usingCropRect:(CGRect)cropRect {
     
-    // we have correct rect, but not correct dimensions
-    // so resize image
-    CGSize desiredImageSize = CGSizeMake([[[self options] objectForKey:@"width"] intValue],
-                                         [[[self options] objectForKey:@"height"] intValue]);
+    CGFloat width = [[self.options objectForKey:@"width"] floatValue];
+    CGFloat height = [[self.options objectForKey:@"height"] floatValue];
     
-    UIImage *resizedImage = [croppedImage resizedImageToFitInSize:desiredImageSize scaleIfSmaller:YES];
-    ImageResult *imageResult = [self.compression compressImage:resizedImage withOptions:self.options];
+    ImageResult *imageResult = nil;
+    if (width > 0 && height > 0){
+        // we have correct rect, but not correct dimensions
+        // so resize image
+        CGSize desiredImageSize = CGSizeMake(width, height);
+        
+        UIImage *resizedImage = [croppedImage resizedImageToFitInSize:desiredImageSize scaleIfSmaller:YES];
+        imageResult = [self.compression compressImage:resizedImage withOptions:self.options];
+    } else {
+        imageResult = [self.compression compressImage:croppedImage withOptions:self.options];
+    }
     
     NSString *filePath = [self persistFile:imageResult.data];
     if (filePath == nil) {
